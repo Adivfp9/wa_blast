@@ -21,8 +21,8 @@ module.exports = function (db, sessionMap, fs, startDEVICE) {
                                     chi.chika.logout();
                                     sessionMap.delete(parseInt(de.nomor))
                                 }
-                                if (fs.existsSync(`./app_node/session/device-${parseInt(de.nomor)}.json`)) {
-                                    fs.unlinkSync(`./app_node/session/device-${parseInt(de.nomor)}.json`);
+                                if (fs.existsSync(`./../session/device-${parseInt(de.nomor)}.json`)) {
+                                    fs.unlinkSync(`./../session/device-${parseInt(de.nomor)}.json`);
                                 }
                             });
                         }
@@ -193,7 +193,7 @@ module.exports = function (db, sessionMap, fs, startDEVICE) {
         let sqlde = `SELECT *  FROM device`;
         db.query(sqlde, function (err, results) {
             results.forEach(async de => {
-                if (fs.existsSync(`./app_node/session/device-${parseInt(de.nomor)}.json`)) {
+                if (fs.existsSync(`./../session/device-${parseInt(de.nomor)}.json`)) {
                     if (!sessionMap.has(parseInt(de.nomor))) {
                         console.log(parseInt(de.nomor))
                         startDEVICE(parseInt(de.nomor))

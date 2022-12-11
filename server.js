@@ -37,10 +37,10 @@ db.connect((err) => {
 const sessionMap = new Map()
 
 async function startDEVICE(idevice) {
-    const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) })
-    const { state, saveState } = useSingleFileAuthState(`./app_node/session/device-${idevice}.json`)
+    const store = makeInMemoryStore({  }) //logger: pino().child({ level: 'silent', stream: 'store' })
+    const { state, saveState } = useSingleFileAuthState(`./../session/device-${idevice}.json`)
     const chika = chikaConnect({
-        logger: pino({ level: 'silent' }),
+        // logger: pino({ level: 'silent' }),
         printQRInTerminal: true,
         browser: ['CNKWA', 'Chrome', '1.0.0'],
         auth: state
@@ -53,19 +53,24 @@ async function startDEVICE(idevice) {
             return decode.user && decode.server && decode.user + '@' + decode.server || jid
         } else return jid
     }
+    
     chika.ev.on('messages.upsert', async chatUpdate => {
         try {
-            mek = chatUpdate.messages[0]
-            if (!mek.message) return
-            // mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message
-            if (mek.key && mek.key.remoteJid === 'status@broadcast') return
-            if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return
-            m = smsg(chika, mek, store)
-            require("./app_node/lib/handler")(chika, chatUpdate, db, m)
+            for(let x in chatUpdate.messages) {
+                const mek = chatUpdate.messages[x]
+                if (!mek.message) return
+                // mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message
+                if (mek.key && mek.key.remoteJid === 'status@broadcast') return
+                if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return
+                m = smsg(chika, mek, store)
+                require("./app_node/lib/handler")(chika, mek, db, m)
+            }
         } catch (err) {
             console.log(err)
         }
     })
+
+
     chika.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update
         if (connection === 'open') {
@@ -83,8 +88,8 @@ async function startDEVICE(idevice) {
             sessionMap.delete(parseInt(idevice))
             const logoutsessi = () => {
                 chika.logout();
-                if (fs.existsSync(`./app_node/session/device-${idevice}.json`)) {
-                    fs.unlinkSync(`./app_node/session/device-${idevice}.json`);
+                if (fs.existsSync(`./../session/device-${idevice}.json`)) {
+                    fs.unlinkSync(`./../session/device-${idevice}.json`);
                 }
             }
             let reason = new Boom(lastDisconnect?.error)?.output.statusCode
@@ -121,14 +126,14 @@ async function startDEVICE(idevice) {
     chika.ev.on('creds.update', saveState)
     chika.ev.on('contacts.upsert', async (m) => {
         console.log(m)
-        request({
-            url: process.env.BASE_WEB + '/app/api/callback',
-            method: "POST",
-            json: {
-                "id": idevice,
-                "data": m
-            }
-        })
+        // request({
+        //     url: process.env.BASE_WEB + '/app/api/callback',
+        //     method: "POST",
+        //     json: {
+        //         "id": idevice,
+        //         "data": m
+        //     }
+        // })
     })
 
     return chika
@@ -137,8 +142,8 @@ async function startDEVICE(idevice) {
 const logoutDEVICE = (idevice) => {
     const chi = sessionMap.get(parseInt(idevice))
     chi.chika.logout();
-    if (fs.existsSync(`./app_node/session/device-${idevice}.json`)) {
-        fs.unlinkSync(`./app_node/session/device-${idevice}.json`);
+    if (fs.existsSync(`./../session/device-${idevice}.json`)) {
+        fs.unlinkSync(`./../session/device-${idevice}.json`);
     }
     sessionMap.delete(parseInt(idevice))
 }
@@ -162,7 +167,7 @@ io.on('connection', function (socket) {
         }
     });
     socket.on('logout', async function (data) {
-        if (fs.existsSync(`./app_node/session/device-${data.id}.json`)) {
+        if (fs.existsSync(`./../session/device-${data.id}.json`)) {
             socket.emit('isdelete', {
                 id: data.id,
                 text: '<h2 class="text-center text-info mt-4">Logout Success, Lets Scan Again<h2>'
@@ -177,8 +182,8 @@ io.on('connection', function (socket) {
     })
 });
 
-require('./app_node/routes/web')(app, sessionMap, startDEVICE)
-require('./app_node/lib/cron')(db, sessionMap, fs, startDEVICE)
+// require('./app_node/routes/web')(app, sessionMap, startDEVICE)
+// require('./app_node/lib/cron')(db, sessionMap, fs, startDEVICE)
 
 let file = require.resolve(__filename)
 fs.watchFile(file, () => {
@@ -187,3 +192,5 @@ fs.watchFile(file, () => {
     delete require.cache[file]
     require(file)
 })
+
+startDEVICE('6285157768065')

@@ -1,16 +1,48 @@
 const { phoneNumberFormatter } = require('./formatter');
 const request = require('request');
+const { text } = require('express');
 
 module.exports = function (chika, chatUpdate, db, m, datetime) {
-    mek = chatUpdate.messages[0]
-    text = m.body
-    sender = mek.key.remoteJid
-    mynumb = chika.decodeJid(chika.user.id).replace(/\D/g, '')
-    devices = chika.decodeJid(chika.user.id).replace(/\D/g, '').replace('@s.whatsapp.net', '')
-    receiver = chika.decodeJid(sender).replace(/\D/g, '').replace('@s.whatsapp.net', '')
+    const mek = chatUpdate
+    const text = m.body
+    const sender = mek.key.remoteJid
+    const mynumb = chika.decodeJid(chika.user.id).replace(/\D/g, '')
+    const devices = chika.decodeJid(chika.user.id).replace(/\D/g, '').replace('@s.whatsapp.net', '')
+    const receiver = chika.decodeJid(sender).replace(/\D/g, '').replace('@s.whatsapp.net', '')
     let today = new Date();
     let timedate = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate() + ' ' + today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds()
     let sqlautoreply = `SELECT * FROM autoreply WHERE keyword = "${text}" AND nomor = "${mynumb}"`;
+
+    // DB Query to add message into table receive_chat
+    if(!mek.key.fromMe) { // cek apakah tipe pesan merupakan receive / sender
+
+        // setup data payloads terkait pesan terima yang akan disimpan
+        const payloads = {
+            msg_id: m.key.id,
+            participant: receiver,
+            msg: m.body,
+            mynumb: devices,
+            fromMe: (+mek.key.fromMe).toString(),
+            times: m.messageTimestamp
+        }
+        
+        // query native untuk melakukan penyimpanan data pesan ke table receive_chat
+        let addReceiveMessages = 'INSERT INTO `receive_chat` (`id_pesan`, `nomor`, `pesan`, `from_me`, `nomor_saya`, `tanggal`) values'
+        + "('{msg_id}', '{participant}', '{msg}', '{fromMe}', '{mynumb}', FROM_UNIXTIME({times}));"
+
+        // remapping data query native terhadap data payloads
+        addReceiveMessages = addReceiveMessages.replace(/(\{)+([A-Za-z_-])+(\})/g, r => payloads[r.replace(/[^A-Za-z_-]/g, '')])
+
+        // execute query
+        db.query(addReceiveMessages, function (err, result) {
+            if(err) {
+                console.log('IF Error >>>', err)
+            }
+            console.log('Results', result)
+        })
+    }
+    
+
     db.query(sqlautoreply, function (err, result) {
         if (!err) {
             result.forEach(data => {
@@ -88,7 +120,7 @@ module.exports = function (chika, chatUpdate, db, m, datetime) {
     let sqlhook = `SELECT link_webhook FROM device WHERE nomor = ${mynumb} `;
     db.query(sqlhook, function (err, result) {
         if (!err) {
-            const webhookurl = result[0].link_webhook;
+            const webhookurl = result[0]?.link_webhook;
             if (webhookurl != '' || webhookurl != null) {
                 const pesan = {
                     sender: phoneNumberFormatter(sender),

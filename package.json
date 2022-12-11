@@ -5,7 +5,8 @@
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "start-dev": "nodemon server.js"
   },
   "keywords": [],
   "author": "VELIXS TECH.",
@@ -27,5 +28,7 @@
     "request": "^2.88.2",
     "socket.io": "^4.4.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
 }
