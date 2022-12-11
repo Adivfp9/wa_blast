@@ -1,0 +1,44 @@
+{
+  "button" :
+  {
+    "yes"    : "Yes",
+    "no"     : "No",
+    "save"   : "Save",
+    "submit" : "Submit",
+    "update" : "Update",
+    "delete" : "Delete",
+    "cancel" : "Cancel"
+  },
+
+  "modal":
+  {
+    "delete_title"   : "Delete Confirmation",
+    "delete_content" : "Are you sure want to delete this data ?",
+    "change_level_title"    : "Change Level Confirmation",
+    "change_level_content"  : "Are you sure want to change this level ?"
+  },
+
+  "message":
+  {
+    "add_success"   : "Data has been successfully added",
+    "update_success": "Data has been successfully updated",
+    "delete_success": "Data has been successfully deleted"
+  },
+
+  "compogen":
+  {
+    "button" :
+    {
+      "next"     : "Next",
+      "prev"     : "Previous",
+      "generate" : "Generate Component Now"
+    }
+  },
+
+  "validation":
+  {
+    "required"   : "This field is required.",
+    "minlength"  : "Please enter at least {0} characters.",
+    "maxlength"  : "Please enter no more than {0} characters."
+  }
+}
